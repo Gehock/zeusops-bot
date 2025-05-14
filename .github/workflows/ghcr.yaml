@@ -42,9 +42,11 @@ jobs:
     #    env:
     #      found: ${{ toJSON(fromJSON(steps.PR.outputs.pr_found)) }}
     steps:
-      - name: asd
-        run: echo "${{ toJSON(github.event) }}"
-      - run: echo "${{ toJSON(github) }}"
+      #- name: asd
+      #  run: echo "${{ toJSON(github.event) }}"
+      - run: echo hello
+        env:
+          json: ${{ toJSON(github) }}
       #- uses: 8BitJonny/gh-get-current-pr@3.0.0
       #  id: PR
 
