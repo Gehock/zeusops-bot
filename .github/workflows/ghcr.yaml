@@ -41,7 +41,7 @@ jobs:
     #    env:
     #      found: ${{ toJSON(fromJSON(steps.PR.outputs.pr_found)) }}
     steps:
-      - run: echo ${{ github.event }}
+      - run: echo ${{ github.event }} ${{ github.notfoundasd }}
       #- uses: 8BitJonny/gh-get-current-pr@3.0.0
       #  id: PR
 
