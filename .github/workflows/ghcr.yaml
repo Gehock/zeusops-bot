@@ -53,7 +53,7 @@ jobs:
           #prJSON: ${{ toJSON(fromJSON(steps.PR.outputs.pr)) }}
           # Direct access to common PR properties
           prJSON: ${{ steps.PR.outputs.pr }}
-          prJSON2: ${{ fromJSON(steps.PR.outputs.pr }}
+          prJSON2: ${{ fromJSON(steps.PR.outputs.pr) }}
           prNumber: ${{ steps.PR.outputs.number }}
           prUrl: ${{ steps.PR.outputs.pr_url }}
           prTitle: ${{ steps.PR.outputs.pr_title }}
