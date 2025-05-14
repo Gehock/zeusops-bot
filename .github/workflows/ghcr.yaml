@@ -45,15 +45,14 @@ jobs:
         id: PR
 
       - run: echo ${{ steps.PR.outputs.pr_found }}
-      - run: echo "PR ${prNumber} ${prTitle} at ${prUrl}"  # is ${prJSON}"
+      - run: echo "PR ${{ env.prNumber}} ${{ env.prTitle}} at ${{ env.prUrl}} is ${{ env.prJSON}}"
         if: steps.PR.outputs.pr_found == 'true'
         env:
           # JSON object with the full PR object
           # toJSON(fromJSON(...pr)) parses it into memory and then format is with pretty-print.
-          #prJSON: ${{ toJSON(fromJSON(steps.PR.outputs.pr)) }}
           # Direct access to common PR properties
-          prJSON: ${{ steps.PR.outputs.pr }}
-          prJSON2: ${{ toJSON(fromJSON(steps.PR.outputs.pr)) }}
+          #prJSON: ${{ steps.PR.outputs.pr }}
+          prJSON: ${{ toJSON(fromJSON(steps.PR.outputs.pr)) }}
           prNumber: ${{ steps.PR.outputs.number }}
           prUrl: ${{ steps.PR.outputs.pr_url }}
           prTitle: ${{ steps.PR.outputs.pr_title }}
