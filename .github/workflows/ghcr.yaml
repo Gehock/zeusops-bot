@@ -2,34 +2,34 @@
 name: Publish Docker
 
 on:
-  #push:
+  push:
   pull_request:
 
 env:
-  IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/zeusops-bot:latest
+  IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/zeusops-bot
 
 jobs:
-  #build:
-  #  name: Build Image
-  #  runs-on: ubuntu-latest
-  #  steps:
-  #    - uses: actions/checkout@master
-  #    - name: Login to GitHub Container Registry
-  #      uses: docker/login-action@v1
-  #      with:
-  #        registry: ghcr.io
-  #        username: ${{ github.repository_owner }}
-  #        password: ${{ secrets.GITHUB_TOKEN }}
-  #    - name: Build Image
-  #      run: docker build -f release.Dockerfile -t zeusops-bot .
-  #    - name: Save Image
-  #      run: docker save zeusops-bot | gzip > image.tar.gz
-  #    - uses: actions/upload-artifact@v4
-  #      with:
-  #        name: image
-  #        path: image.tar.gz
-  #        if-no-files-found: error
-  #        retention-days: 7
+  build:
+    name: Build Image
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build Image
+        run: docker build -f release.Dockerfile -t zeusops-bot .
+      - name: Save Image
+        run: docker save zeusops-bot | gzip > image.tar.gz
+      - uses: actions/upload-artifact@v4
+        with:
+          name: image
+          path: image.tar.gz
+          if-no-files-found: error
+          retention-days: 7
 
   pr_test:
     name: Test PR
@@ -67,43 +67,46 @@ jobs:
       #    prMergedAt: ${{ steps.PR.outputs.pr_merged_at }}
       #    prClosedAt: ${{ steps.PR.outputs.pr_closed_at }}
       #    prLabel: ${{ steps.PR.outputs.pr_labels }}
-  pr_publish:
-    name: Publish PR image
-    runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
-    env:
-      IMAGE_TAG: pr-${{ github.event.number }}
-    steps:
-      - name: full image name
-        run: |
-          echo "IMAGE_TAG_LOWER=${IMAGE_NAME@L}:${IMAGE_TAG}" >> "${GITHUB_ENV}"
-      - name: Tag Image
-        run: echo would tag as "$IMAGE_TAG_LOWER"
-
-  #main_publish:
-  #  name: Publish Image
+  #pr_publish:
+  #  name: Publish PR image
   #  runs-on: ubuntu-latest
-  #  needs:
-  #    - build
-  #  if: github.ref == 'refs/heads/main'
+  #  if: github.event_name == 'pull_request'
+  #  env:
+  #    IMAGE_TAG: pr-${{ github.event.number }}
   #  steps:
-  #    - uses: 8BitJonny/gh-get-current-pr@3.0.0
-  #      id: PR
-  #    - name: Login to GHCR
-  #      uses: docker/login-action@v1
-  #      with:
-  #        registry: ghcr.io
-  #        username: ${{ github.repository_owner }}
-  #        password: ${{ secrets.GITHUB_TOKEN }}
-  #    - uses: actions/download-artifact@v4
-  #      with:
-  #        name: image
-  #    - name: Load Image
-  #      run: docker load < image.tar.gz
-  #    - name: lowercase repo
+  #    - name: full image name
   #      run: |
-  #        echo "IMAGE_TAG_LOWER=${IMAGE_NAME@L}:latest" >> "${GITHUB_ENV}"
+  #        echo "IMAGE_TAG_LOWER=${IMAGE_NAME@L}:${IMAGE_TAG}" >> "${GITHUB_ENV}"
   #    - name: Tag Image
-  #      run: docker tag zeusops-bot "$IMAGE_TAG_LOWER"
-  #    - name: Push Image
-  #      run: docker push "$IMAGE_TAG_LOWER"
+  #      run: echo would tag as "$IMAGE_TAG_LOWER"
+
+  publish:
+    name: Publish Image
+    runs-on: ubuntu-latest
+    needs:
+      - build
+    #if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Create Release Image Name
+        if: github.ref == 'refs/heads/main'
+        run: |
+          echo "IMAGE_TAG_LOWER=${IMAGE_NAME@L}:latest" >> "${GITHUB_ENV}"
+      - name: Create PR Image Name
+        if: github.event_name == 'pull_request'
+        run: |
+          echo "IMAGE_TAG_LOWER=${IMAGE_NAME@L}:pr-${{ github.event.number }}" >> "${GITHUB_ENV}"
+      - name: Login to GHCR
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: image
+      - name: Load Image
+        run: docker load < image.tar.gz
+      - name: Tag Image
+        run: docker tag zeusops-bot "$IMAGE_TAG_LOWER"
+      - name: Push Image
+        run: docker push "$IMAGE_TAG_LOWER"
