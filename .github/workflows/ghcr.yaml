@@ -3,9 +3,12 @@ name: Publish Docker
 
 on:
   push:
+    branches:
+      - main
+  pull_request:
 
 env:
-  IMAGE_TAG: ghcr.io/${{ github.repository_owner }}/zeusops-bot:latest
+  IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/zeusops-bot
 
 jobs:
   build:
@@ -30,13 +33,69 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
-  main_publish:
+  pr_test:
+    name: Test PR
+    runs-on: ubuntu-latest
+    #steps:
+    #  - name: Get Current Pull Request
+    #    uses: 8BitJonny/gh-get-current-pr@3.0.0
+    #    id: PR
+    #  - run: "echo pr_found: ${found} ${{ steps.PR.outputs.pr_found }}"
+    #    env:
+    #      found: ${{ toJSON(fromJSON(steps.PR.outputs.pr_found)) }}
+    steps:
+      #- name: asd
+      #  run: echo "${{ toJSON(github.event) }}"
+      - run: echo hello
+        env:
+          json: ${{ toJSON(github) }}
+      #- uses: 8BitJonny/gh-get-current-pr@3.0.0
+      #  id: PR
+
+      #- run: echo ${{ steps.PR.outputs.pr_found }}
+      #- run: echo "PR ${{ env.prNumber}} ${{ env.prTitle}} at ${{ env.prUrl}} is ${{ env.prJSON}}"
+      #  if: steps.PR.outputs.pr_found == 'true'
+      #  env:
+      #    # JSON object with the full PR object
+      #    # toJSON(fromJSON(...pr)) parses it into memory and then format is with pretty-print.
+      #    # Direct access to common PR properties
+      #    #prJSON: ${{ steps.PR.outputs.pr }}
+      #    prJSON: ${{ toJSON(fromJSON(steps.PR.outputs.pr)) }}
+      #    prNumber: ${{ steps.PR.outputs.number }}
+      #    prUrl: ${{ steps.PR.outputs.pr_url }}
+      #    prTitle: ${{ steps.PR.outputs.pr_title }}
+      #    prBody: ${{ steps.PR.outputs.pr_body }}
+      #    prCreatedAt: ${{ steps.PR.outputs.pr_created_at }}
+      #    prMergedAt: ${{ steps.PR.outputs.pr_merged_at }}
+      #    prClosedAt: ${{ steps.PR.outputs.pr_closed_at }}
+      #    prLabel: ${{ steps.PR.outputs.pr_labels }}
+  #pr_publish:
+  #  name: Publish PR image
+  #  runs-on: ubuntu-latest
+  #  if: github.event_name == 'pull_request'
+  #  env:
+  #    IMAGE_TAG: pr-${{ github.event.number }}
+  #  steps:
+  #    - name: full image name
+  #      run: |
+  #        echo "IMAGE_TAG_LOWER=${IMAGE_NAME@L}:${IMAGE_TAG}" >> "${GITHUB_ENV}"
+  #    - name: Tag Image
+  #      run: echo would tag as "$IMAGE_TAG_LOWER"
+
+  publish:
     name: Publish Image
     runs-on: ubuntu-latest
     needs:
       - build
-    if: github.ref == 'refs/heads/main'
     steps:
+      - name: Create Release Image Name
+        if: github.ref == 'refs/heads/main'
+        run: |
+          echo "IMAGE_TAG_LOWER=${IMAGE_NAME@L}:latest" >> "${GITHUB_ENV}"
+      - name: Create PR Image Name
+        if: github.event_name == 'pull_request'
+        run: |
+          echo "IMAGE_TAG_LOWER=${IMAGE_NAME@L}:pr-${{ github.event.number }}" >> "${GITHUB_ENV}"
       - name: Login to GHCR
         uses: docker/login-action@v1
         with:
@@ -48,9 +107,6 @@ jobs:
           name: image
       - name: Load Image
         run: docker load < image.tar.gz
-      - name: lowercase repo
-        run: |
-          echo "IMAGE_TAG_LOWER=${IMAGE_TAG@L}" >> "${GITHUB_ENV}"
       - name: Tag Image
         run: docker tag zeusops-bot "$IMAGE_TAG_LOWER"
       - name: Push Image
